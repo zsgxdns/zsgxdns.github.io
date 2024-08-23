@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识共享  Z-Lib跳转页面</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column; /* 使内容垂直排列 */
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        #banner {
+            width: 60%; /* 设置横幅图片的宽度 */
+            max-width: 265px; /* 设置最大宽度 */
+            margin-bottom: 40px; /* 图片和提示文字之间的间距 */
+        }
+        #message {
+            font-size: 24px;
+            color: #333;
+            opacity: 0;
+            animation: blink 1s infinite; /* 设置闪烁动画 */
+            margin-bottom: 20px; /* 提示文字和进度条之间的间距 */
+        }
+        #progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px; /* 进度条与上方内容的间距 */
+        }
+        #progress-bar {
+            height: 20px;
+            width: 0;
+            background-color: #76c7c0;
+            transition: width 0.5s;
+        }
+        #current-url {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 10px; /* 当前地址与进度条之间的间距 */
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 0; /* 开始和结束时透明 */
+            }
+            50% {
+                opacity: 1; /* 中间时不透明 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <img id="banner" src="https://zh.japanese-books.sk/img/logo.zlibrary.svg" alt="横幅图片"> <!-- 替换为你的图片链接 -->
+    <div id="message">正在检测，请稍候...</div>
+    <div id="current-url">正在检测第 1 个地址...</div> <!-- 当前检测地址 -->
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+
+    <script>
+        const urls = [
+            { url: 'https://zh.greek-books.sk/', delay: 0 },
+            { url: 'https://zh.russian-books.sk', delay: 0 },
+            { url: 'https://zh.japanese-books.sk', delay: 0 }
+        ];
+
+        const messageElement = document.getElementById('message');
+        const progressBar = document.getElementById('progress-bar');
+        const currentUrlElement = document.getElementById('current-url');
+
+        async function checkUrl(url) {
+            const start = performance.now();
+            try {
+                await fetch(url, { method: 'HEAD', mode: 'cors' });
+            } catch (error) {
+                console.error('Error fetching:', url, error);
+                return Infinity; // 如果请求失败，返回一个很大的延迟
+            }
+            const end = performance.now();
+            return end - start;
+        }
+
+        async function detectBestUrl() {
+            messageElement.style.opacity = 1; // 显示提示信息
+
+            for (let i = 0; i < urls.length; i++) {
+                const item = urls[i];
+                currentUrlElement.textContent = '正在检测第 ' + (i + 1) + ' 个地址...'; // 更新当前检测地址
+                item.delay = await checkUrl(item.url);
+                // 更新进度条
+                const progress = ((i + 1) / urls.length) * 100;
+                progressBar.style.width = progress + '%';
+            }
+
+            // 根据延迟选择最快的 URL
+            const bestUrl = urls.reduce((prev, curr) => (prev.delay < curr.delay ? prev : curr));
+            window.location.href = bestUrl.url; // 跳转到最佳网址
+        }
+
+        detectBestUrl();
+    </script>
+</body>
+</html>
